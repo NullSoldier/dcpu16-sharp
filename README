@@ -1,0 +1,2 @@
+This is a simple DCPU-16 emulator written in C#
+It's not meant to be used by anyone. I wrote it for learning purposes because I had very little knowledge of processors and I wanted to change that.
