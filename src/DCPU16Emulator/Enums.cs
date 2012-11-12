@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DCPU16Emulator.Core
+namespace DCPU16Emulator
 {
 	public enum OPCODES
 	{

@@ -41,14 +41,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Core\Enums.cs" />
-    <Compile Include="Core\Processor.cs" />
+    <Compile Include="Enums.cs" />
+    <Compile Include="Processor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="bin\Debug\Samples\ParseTest.bin" />
     <None Include="Samples\Increment.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
