@@ -6,40 +6,36 @@ using System.Threading.Tasks;
 
 namespace DCPU16Emulator.Core
 {
-	// Processor
-	// - Load instructions into the processor at offset 0
-	// - Tell it to run (set PC counter to offset 0) and start
-
-	//start at instruction 0
-	//For each instruction
-	//	[PC++]
-	//	Parse a (upper 6 bits)
-	//	Parse b (next 5 bits)
-	//	Parse o (lower 5 bits)
-
 	public class Processor
 	{
-		public Processor()
+		public Processor(ushort[] instructions)
 		{
-			clearMemory ();
+			mem = new ushort[ushort.MaxValue];
+			PC = SP = A = B = C = X = Y = Z = I = J = 0;
+
+			instructions.CopyTo (mem, 0);
 		}
 
-		public void Run(ushort[] instructions)
+		public void Run()
 		{
-			instructions.CopyTo (mem, 0);
-
 			while (true)
 			{
-				ushort nextWord = getNextWord ();
+				ushort nextWord = getNextWord();
 
 				ushort opcode = (ushort)(nextWord & 0x1f);
-				Value a = getValue (true, (ushort) ((nextWord & 0xfc00) >> 10));
-				Value b = getValue (false, (ushort) (nextWord & 0x3e0 >> 5));
+				ushort b = (ushort) ((nextWord & 0x3e0) >> 5);
+				ushort a = (ushort) ((nextWord & 0xfc00) >> 10);
 
-				switch (opcode)
+				switch ((OPCODES)opcode)
 				{
-					case 0x01: // SET
-						setValue (b, a);
+					case OPCODES.SET:
+						setValue (b, getValue (a, true));
+						break;
+					case OPCODES.ADD:
+						setValue (b, getValue (b, false) + getValue (a, true));
+						break;
+					case OPCODES.SUB:
+						setValue (b, getValue (b, false) - getValue (a, true));
 						break;
 					default:
 						throw new NotImplementedException ();
@@ -47,130 +43,117 @@ namespace DCPU16Emulator.Core
 			}
 		}
 
-		private Dictionary<Registers, ushort> registers;
 		private ushort[] mem;
-		private ushort sp;
-		private ushort pc;
-		private ushort ex;
+		private ushort PC, SP, EX, A, B, C, X, Y, Z, I, J;
 
 		private ushort getNextWord()
 		{
-			return mem[pc++];
+			return mem[PC++];
 		}
 
-		private Value getValue(bool isA, ushort value)
+		private ushort getValue (ushort bits, bool bitsAreA)
 		{
-			if (value >= 0x00 && value <= 0x07) // register
+			switch ((VALUES)bits)
 			{
-				var register = (Registers) value;
-				return new Value (Values.Register, register);
+				//register
+				case VALUES.A: return A;
+				case VALUES.B: return B;
+				case VALUES.C: return C;
+				case VALUES.X: return X;
+				case VALUES.Y: return Y;
+				case VALUES.Z: return Z;
+				case VALUES.I: return I;
+				case VALUES.J: return J;
+
+				// [register]
+				case VALUES.REG_A: return mem[A];
+				case VALUES.REG_B: return mem[B];
+				case VALUES.REG_C: return mem[C];
+				case VALUES.REG_X: return mem[X];
+				case VALUES.REG_Y: return mem[Y];
+				case VALUES.REG_Z: return mem[Z];
+				case VALUES.REG_I: return mem[I];
+				case VALUES.REG_J: return mem[J];
+
+				// [register + next word]
+				case VALUES.REGN_A: return mem[mem[A] + getNextWord ()];
+				case VALUES.REGN_B: return mem[mem[B] + getNextWord ()];
+				case VALUES.REGN_C: return mem[mem[C] + getNextWord ()];
+				case VALUES.REGN_X: return mem[mem[X] + getNextWord ()];
+				case VALUES.REGN_Y: return mem[mem[Y] + getNextWord ()];
+				case VALUES.REGN_Z: return mem[mem[Z] + getNextWord ()];
+				case VALUES.REGN_I: return mem[mem[I] + getNextWord ()];
+				case VALUES.REGN_J: return mem[mem[J] + getNextWord ()];
+
+				case VALUES.SP: return SP;
+				case VALUES.PC: return PC;
+				case VALUES.EX: return EX;
+				case VALUES.PUSHPOP: return bitsAreA ? mem[SP++] : mem[--SP];
+				case VALUES.PEEK: return mem[SP];
+				case VALUES.PICK: return mem[SP + getNextWord ()];
+				case VALUES.NEXT: return mem[getNextWord ()];
+				case VALUES.NEXTLIT: return getNextWord ();
 			}
-			else if (value >= 0x08 && value <= 0x0f) // [register]
-			{
-				var register = (Registers) value;
-				return new Value (Values.PointerValue, registers[register]);
-			}
-			else if (value >= 0x10 && value <= 0x17) // [register + next word]
-			{
-				var register = (Registers) value;
-				var addedValue = (ushort) (registers[register] + getNextWord());
 
-				return new Value (Values.PointerValue, addedValue);
-			}
-			else if (value >= 0x20 && value <= 0x3f) // literals
-			{
-				ushort literal = (ushort) (value & 31 - 1);
-				return new Value (Values.Literal, literal);
-			}
+			// Literals - 32 possible values (-1..30) (65535..30) (0xffff..0x1e)
+			if (bits >= 0x20 && bits <= 0x3f)
+				return (ushort) (bits - 0x21);
 
-			switch (value)
-			{
-				case 0x18: // if A, PUSH. if B, POP
-					return isA ? new Value (Values.PointerValue, pop ())
-						: new Value (Values.PointerValue, push());
-
-				case 0x19: // PEEK
-					return new Value (Values.PointerValue, peek());
-
-				case 0x1a: // [SP + next word]
-					ushort stackValue = mem[sp];
-					Value nextValue = getValue (isA, getNextWord());
-					ushort combinedValue = (ushort) (stackValue + nextValue.ActualValue);
-					return new Value (Values.PointerValue, combinedValue);
-					
-				case 0x1b: // SP
-					return new Value (Values.SP);
-
-				case 0x1c: // PC
-					return new Value (Values.PC);
-
-				case 0x1d: // EX
-					return new Value (Values.EX);
-
-				case 0x1e: // [next word]
-					return getValue (isA, getNextWord());
-
-				case 0x1f: // next word (literal)
-					return new Value (Values.PointerValue, getNextWord ());
-
-				default:
-					throw new NotSupportedException ("Instruction is not supported");
-			}
+			throw new NotSupportedException ("Value " + bits + " is not supported");
 		}
 
-		private void setValue (Value dest, Value src)
+		private void setValue(ushort dest, int x)
 		{
-			switch (dest.TypeOfValue)
+			setValue (dest, (ushort) x);
+		}
+
+		private void setValue (ushort dest, ushort x)
+		{
+			switch (dest)
 			{
-				case Values.SP:
-					sp = src.ActualValue;
-					break;
-				case Values.PC:
-					pc = src.ActualValue;
-					break;
-				case Values.Register:
-					registers[dest.Register] = src.ActualValue;
-					break;
-				case Values.PointerValue:
-				case Values.Literal:
-					// Setting literal fails silently
-					break;
-				default:
-					throw new NotSupportedException ("Unsupported type to set");
+				case 0x00: A = x; return;
+				case 0x01: B = x; return;
+				case 0x02: C = x; return;
+				case 0x03: X = x; return;
+				case 0x04: Y = x; return;
+				case 0x05: Z = x; return;
+				case 0x06: I = x; return;
+				case 0x07: J = x; return;
+
+				// [register]
+				case 0x08: mem[A] = x; return;
+				case 0x09: mem[B] = x; return;
+				case 0x0a: mem[C] = x; return;
+				case 0x0b: mem[X] = x; return;
+				case 0x0c: mem[Y] = x; return;
+				case 0x0d: mem[Z] = x; return;
+				case 0x0e: mem[I] = x; return;
+				case 0x0f: mem[J] = x; return;
+
+				// [register + next word]
+				case 0x10: mem[A + getNextWord ()] = x; return;
+				case 0x11: mem[B + getNextWord ()] = x; return;
+				case 0x12: mem[C + getNextWord ()] = x; return;
+				case 0x13: mem[X + getNextWord ()] = x; return;
+				case 0x14: mem[Y + getNextWord ()] = x; return;
+				case 0x15: mem[Z + getNextWord ()] = x; return;
+				case 0x16: mem[I + getNextWord ()] = x; return;
+				case 0x17: mem[J + getNextWord ()] = x; return;
+
+				case 0x18: throw new NotImplementedException(); // PUSH/POP
+				case 0x19: mem[SP] = x; return;					// PEEK
+				case 0x1a: mem[SP + getNextWord ()] = x; return;	// [SP + next word]
+				case 0x1b: SP = x; return;						// SP
+				case 0x1c: PC = x; return;						// PC
+				case 0x1d: EX = x; return;						// EX
+				case 0x1e: mem[getNextWord ()] = x; return;		// [next word]
 			}
-		}
 
-		private void clearMemory()
-		{
-			mem = new ushort[ushort.MaxValue];
-			sp = 0;
-			pc = 0;
+			// Literals fails silently
+			if (dest == 0x1f || (dest >= 0x20 && dest <= 0x3f)) // literals
+				return;
 
-			registers = new Dictionary<Registers, ushort> {
-				{Registers.A, 0},
-				{Registers.B, 0},
-				{Registers.C, 0},
-				{Registers.I, 0},
-				{Registers.J, 0},
-				{Registers.X, 0},
-				{Registers.Y, 0},
-				{Registers.Z, 0}
-			};
-		}
-
-		private ushort peek()
-		{
-			return mem[sp];
-		}
-
-		private ushort pop()
-		{
-			return mem [sp++];
-		}
-
-		private ushort push()
-		{
-			return mem [--sp];
+			throw new NotSupportedException ("Unsupported type to set to");
 		}
 	}
 }

@@ -24,8 +24,8 @@ namespace DCPU16Emulator
 				Buffer.BlockCopy (buffer, 0, instructions, 0, buffer.Length);
 			}
 
-			var cpu = new Processor();
-			cpu.Run (instructions);
+			var cpu = new Processor (instructions);
+			cpu.Run();
 		}
 	}
 }
