@@ -142,7 +142,7 @@ namespace DCPU16Emulator
 
 				case 0x18: throw new NotImplementedException(); // PUSH/POP
 				case 0x19: mem[SP] = x; return;					// PEEK
-				case 0x1a: mem[SP + getNextWord ()] = x; return;	// [SP + next word]
+				case 0x1a: mem[SP + getNextWord ()] = x; return; // [SP + next word]
 				case 0x1b: SP = x; return;						// SP
 				case 0x1c: PC = x; return;						// PC
 				case 0x1d: EX = x; return;						// EX

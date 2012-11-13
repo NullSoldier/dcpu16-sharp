@@ -1,7 +1,6 @@
-﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DCPU16Emulator", "src\DCPU16Emulator\DCPU16Emulator.csproj", "{E35D9181-F7AE-4486-A8DE-36DF1C176A35}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dcpu16-sharp", "src\dcpu16-sharp.csproj", "{E35D9181-F7AE-4486-A8DE-36DF1C176A35}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
