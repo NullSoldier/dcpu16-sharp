@@ -10,9 +10,6 @@ namespace DCPU16Emulator
 	{
 		public Processor(ushort[] instructions)
 		{
-			mem = new ushort[ushort.MaxValue];
-			PC = SP = A = B = C = X = Y = Z = I = J = 0;
-
 			instructions.CopyTo (mem, 0);
 		}
 
@@ -29,13 +26,13 @@ namespace DCPU16Emulator
 				switch ((OPCODES)opcode)
 				{
 					case OPCODES.SET:
-						setValue (b, getValue (a, true));
+						setValue (b, getValueR (a));
 						break;
 					case OPCODES.ADD:
-						setValue (b, getValue (b, false) + getValue (a, true));
+						setValue (b, (ushort) (getValueL (b) + getValueR (a)));
 						break;
 					case OPCODES.SUB:
-						setValue (b, getValue (b, false) - getValue (a, true));
+						setValue (b, (ushort) (getValueL (b) - getValueR (a)));
 						break;
 					default:
 						throw new NotImplementedException ();
@@ -43,12 +40,22 @@ namespace DCPU16Emulator
 			}
 		}
 
-		private ushort[] mem;
+		private ushort[] mem = new ushort[ushort.MaxValue];
 		private ushort PC, SP, EX, A, B, C, X, Y, Z, I, J;
 
 		private ushort getNextWord()
 		{
 			return mem[PC++];
+		}
+
+		private ushort getValueL (ushort bits)
+		{
+			return getValue (bits, false);
+		}
+
+		private ushort getValueR (ushort bits)
+		{
+			return getValue (bits, true);
 		}
 
 		private ushort getValue (ushort bits, bool bitsAreA)
@@ -100,11 +107,6 @@ namespace DCPU16Emulator
 				return (ushort) (bits - 0x21);
 
 			throw new NotSupportedException ("Value " + bits + " is not supported");
-		}
-
-		private void setValue(ushort dest, int x)
-		{
-			setValue (dest, (ushort) x);
 		}
 
 		private void setValue (ushort dest, ushort x)
