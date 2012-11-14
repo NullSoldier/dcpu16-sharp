@@ -60,6 +60,18 @@ namespace DCPU16Emulator
 
 		private ushort getValue (ushort bits, bool bitsAreA)
 		{
+			// Literals (-1..30)
+			if (bits >= 0x20 && bits <= 0x3f)
+				return (ushort)(bits - 0x21);
+
+			// Turn next word registers
+			ushort nextWord = 0;
+			if (bits >= 0x10 && bits <= 0x17)
+			{
+				nextWord = getNextWord();
+				bits /= 2;
+			}
+
 			switch ((VALUES)bits)
 			{
 				//register
@@ -72,25 +84,15 @@ namespace DCPU16Emulator
 				case VALUES.I: return I;
 				case VALUES.J: return J;
 
-				// [register]
-				case VALUES.REG_A: return mem[A];
-				case VALUES.REG_B: return mem[B];
-				case VALUES.REG_C: return mem[C];
-				case VALUES.REG_X: return mem[X];
-				case VALUES.REG_Y: return mem[Y];
-				case VALUES.REG_Z: return mem[Z];
-				case VALUES.REG_I: return mem[I];
-				case VALUES.REG_J: return mem[J];
-
-				// [register + next word]
-				case VALUES.REGN_A: return mem[mem[A] + getNextWord ()];
-				case VALUES.REGN_B: return mem[mem[B] + getNextWord ()];
-				case VALUES.REGN_C: return mem[mem[C] + getNextWord ()];
-				case VALUES.REGN_X: return mem[mem[X] + getNextWord ()];
-				case VALUES.REGN_Y: return mem[mem[Y] + getNextWord ()];
-				case VALUES.REGN_Z: return mem[mem[Z] + getNextWord ()];
-				case VALUES.REGN_I: return mem[mem[I] + getNextWord ()];
-				case VALUES.REGN_J: return mem[mem[J] + getNextWord ()];
+				// [register] and [register + nextWord]
+				case VALUES.REG_A: return mem[A + nextWord];
+				case VALUES.REG_B: return mem[B + nextWord];
+				case VALUES.REG_C: return mem[C + nextWord];
+				case VALUES.REG_X: return mem[X + nextWord];
+				case VALUES.REG_Y: return mem[Y + nextWord];
+				case VALUES.REG_Z: return mem[Z + nextWord];
+				case VALUES.REG_I: return mem[I + nextWord];
+				case VALUES.REG_J: return mem[J + nextWord];
 
 				case VALUES.SP: return SP;
 				case VALUES.PC: return PC;
@@ -100,13 +102,9 @@ namespace DCPU16Emulator
 				case VALUES.PICK: return mem[SP + getNextWord ()];
 				case VALUES.NEXT: return mem[getNextWord ()];
 				case VALUES.NEXTLIT: return getNextWord ();
+
+				default: throw new NotSupportedException ("Value " + bits + " is not supported");
 			}
-
-			// Literals - 32 possible values (-1..30) (65535..30) (0xffff..0x1e)
-			if (bits >= 0x20 && bits <= 0x3f)
-				return (ushort) (bits - 0x21);
-
-			throw new NotSupportedException ("Value " + bits + " is not supported");
 		}
 
 		private void setValue (ushort dest, ushort x)
