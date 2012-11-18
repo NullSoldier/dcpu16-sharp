@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,7 +14,7 @@ namespace Tests.Tests
 	{
 		public BaseTest (string testBinaryPath)
 		{
-			this.path = testBinaryPath;
+			this.path = Path.Combine (binaryRoot, testBinaryPath);
 		}
 
 		[SetUp]
@@ -31,5 +32,6 @@ namespace Tests.Tests
 
 		protected Processor cpu;
 		private readonly string path;
+		private const string binaryRoot = "Testbinaries";
 	}
 }

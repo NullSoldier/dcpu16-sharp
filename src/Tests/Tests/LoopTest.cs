@@ -5,7 +5,7 @@ namespace Tests.Tests
 	[TestFixture]
 	public class LoopTest : BaseTest
 	{
-		public LoopTest() : base ("Samples/Loop.bin") { }
+		public LoopTest() : base ("Loop.bin") { }
 
 		[Test]
 		public void Loop()

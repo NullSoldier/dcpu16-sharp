@@ -5,7 +5,7 @@ namespace Tests.Tests
 	[TestFixture]
 	public class IncrementTest : BaseTest
 	{
-		public IncrementTest() : base ("Samples/Increment.bin") { }
+		public IncrementTest() : base ("Increment.bin") { }
 
 		[Test]
 		public void Increment()

@@ -5,7 +5,7 @@ namespace Tests.Tests
 	[TestFixture]
 	public class InteruptTest : BaseTest
 	{
-		public InteruptTest() : base ("Samples/SoftwareInterruptTest.bin") { }
+		public InteruptTest() : base ("SoftwareInterruptTest.bin") { }
 
 		[Test]
 		public void Interrupt()
