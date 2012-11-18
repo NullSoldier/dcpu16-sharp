@@ -21,17 +21,8 @@ namespace DCPU16Emulator
 			}
 		}
 
-		private void SkipUntilNonIf()
-		{
-			ushort nextWord = getNextWord ();
-			ushort opcode = (ushort)(nextWord & 0x1f);
-
-			while (opcode >= (ushort)OPCODES.IFB && opcode <= (ushort)OPCODES.IFU)
-			{
-				nextWord = getNextWord ();
-				opcode = (ushort)(nextWord & 0x1f);
-			}
-		}
+		private ushort[] mem = new ushort[ushort.MaxValue];
+		private ushort PC, SP, EX, A, B, C, X, Y, Z, I, J;
 
 		private void ProcessNextInstruction ()
 		{
@@ -155,8 +146,17 @@ namespace DCPU16Emulator
 			}
 		}
 
-		private ushort[] mem = new ushort[ushort.MaxValue];
-		private ushort PC, SP, EX, A, B, C, X, Y, Z, I, J;
+		private void SkipUntilNonIf()
+		{
+			ushort nextWord = getNextWord ();
+			ushort opcode = (ushort)(nextWord & 0x1f);
+
+			while (opcode >= (ushort)OPCODES.IFB && opcode <= (ushort)OPCODES.IFU)
+			{
+				nextWord = getNextWord ();
+				opcode = (ushort)(nextWord & 0x1f);
+			}
+		}
 
 		private ushort getNextWord()
 		{
