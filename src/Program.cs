@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DCPU16Emulator
+namespace dcpu16sharp
 {
 	public class Program
 	{
