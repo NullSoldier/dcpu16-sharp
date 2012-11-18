@@ -52,4 +52,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="DCPU-16Spec.txt" />
+  </ItemGroup>
 </Project>
