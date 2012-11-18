@@ -14,7 +14,7 @@ namespace dcpu16sharp
 		}
 
 		public event EventHandler SoftwareInterruptFired;
-		public ushort[] mem = new ushort[ushort.MaxValue];
+		public ushort[] mem = new ushort[ushort.MaxValue+1];
 		public ushort PC, SP, EX, A, B, C, X, Y, Z, I, J;
 
 		public void ProcessNextInstruction()
@@ -94,8 +94,10 @@ namespace dcpu16sharp
 					SetValue ((ushort)VALUES.EX, (ushort) (tmpB << (16 - tmpA)));
 					break;
 				case OPCODES.SHL:
-					binaryOp ((x, y) => x >> y);
-					SetValue ((ushort) VALUES.EX, (ushort) (((b << a) >> 16) & 0xffff));
+					tmpA = GetValueR (a);
+					tmpB = GetValueL (b);
+					SetValue (b, (ushort) (tmpB << tmpA));
+					SetValue ((ushort) VALUES.EX, (ushort) (((tmpB << tmpA) >> 16) & 0xffff));
 					break;
 				case OPCODES.IFB:
 					ifOp ((x, y) => (x & y) != 0);
@@ -142,13 +144,27 @@ namespace dcpu16sharp
 			}
 		}
 
-		private void ProcessSpecialInstruction (ushort opcode, ushort value)
+		private void ProcessSpecialInstruction (ushort opcode, ushort rValue)
 		{
 			switch ((SPECIAL_OPCODES)opcode)
 			{
-				case SPECIAL_OPCODES.INT:
-					FireSoftwareInterrupt (value);
+				case SPECIAL_OPCODES.JSR:
+					mem[--SP] = PC;
+					PC = rValue;
 					break;
+				case SPECIAL_OPCODES.INT:
+					FireSoftwareInterrupt (rValue);
+					break;
+				case SPECIAL_OPCODES.IAG:
+				case SPECIAL_OPCODES.IAS:
+				case SPECIAL_OPCODES.RFI:
+				case SPECIAL_OPCODES.IAQ:
+				case SPECIAL_OPCODES.HWN:
+				case SPECIAL_OPCODES.HWQ:
+				case SPECIAL_OPCODES.HWI:
+					throw new NotImplementedException();
+				default:
+					throw new NotSupportedException();
 			}
 		}
 
