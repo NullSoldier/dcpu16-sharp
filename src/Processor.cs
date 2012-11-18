@@ -17,26 +17,141 @@ namespace DCPU16Emulator
 		{
 			while (true)
 			{
-				ushort nextWord = getNextWord();
+				ProcessNextInstruction();
+			}
+		}
 
-				ushort opcode = (ushort)(nextWord & 0x1f);
-				ushort b = (ushort) ((nextWord & 0x3e0) >> 5);
-				ushort a = (ushort) ((nextWord & 0xfc00) >> 10);
+		private void SkipUntilNonIf()
+		{
+			ushort nextWord = getNextWord ();
+			ushort opcode = (ushort)(nextWord & 0x1f);
 
-				switch ((OPCODES)opcode)
-				{
-					case OPCODES.SET:
-						setValue (b, getValueR (a));
-						break;
-					case OPCODES.ADD:
-						setValue (b, (ushort) (getValueL (b) + getValueR (a)));
-						break;
-					case OPCODES.SUB:
-						setValue (b, (ushort) (getValueL (b) - getValueR (a)));
-						break;
-					default:
-						throw new NotImplementedException ();
-				}
+			while (opcode >= (ushort)OPCODES.IFB && opcode <= (ushort)OPCODES.IFU)
+			{
+				nextWord = getNextWord ();
+				opcode = (ushort)(nextWord & 0x1f);
+			}
+		}
+
+		private void ProcessNextInstruction ()
+		{
+			ushort nextWord = getNextWord();
+
+			ushort opcode = (ushort) (nextWord & 0x1f);
+			ushort b = (ushort) ((nextWord & 0x3e0) >> 5);
+			ushort a = (ushort) ((nextWord & 0xfc00) >> 10);
+
+			Action<Func<ushort, ushort, int>> binaryOp = (f) =>
+			    setValue (b, (ushort) f (getValueL (b), getValueR (a)));
+
+			Action<Func<short, short, int>> binaryOpS = (f) =>
+				binaryOp ((x, y) => f ((short) x, (short) y));
+
+			Action<Func<ushort, ushort, bool>> ifOp = (f) => {
+				if (f (b, a)) ProcessNextInstruction();
+				else SkipUntilNonIf();
+			};
+
+			Action<Func<short, short, bool>> ifOpS = (f) =>
+				ifOp ((x, y) => f ((short) x, (short) y));
+
+			switch ((OPCODES) opcode)
+			{
+				case OPCODES.SET:
+					setValue (b, getValueR (a));
+					break;
+				case OPCODES.ADD:
+					binaryOp ((x, y) => x + y);
+					break;
+				case OPCODES.SUB:
+					binaryOp ((x, y) => x - y);
+					break;
+				case OPCODES.MUL:
+					binaryOp ((x, y) => x*y);
+					break;
+				case OPCODES.MLI:
+					binaryOpS ((x, y) => x*y);
+					break;
+				case OPCODES.DIV:
+					binaryOp ((x, y) => x/y);
+					break;
+				case OPCODES.DVI:
+					binaryOpS ((x, y) => x/y);
+					break;
+				case OPCODES.MOD:
+					binaryOp ((x, y) => x%y);
+					break;
+				case OPCODES.MDI:
+					binaryOpS ((x, y) => x%y);
+					break;
+				case OPCODES.AND:
+					binaryOp ((x, y) => x & y);
+					break;
+				case OPCODES.BOR:
+					binaryOp ((x, y) => x | y);
+					break;
+				case OPCODES.XOR:
+					binaryOp ((x, y) => x ^ y);
+					break;
+				case OPCODES.SHR:
+					ushort tmpA = getValueR (a);
+					ushort tmpB = getValueL (b);
+					setValue (b, (ushort) (tmpA >> tmpB));
+					setValue ((ushort)VALUES.EX, (ushort)(((ushort)(tmpB << 16) >> tmpA) & 0xffff));
+					break;
+				case OPCODES.ASR:
+					// No declaration (because C#)
+					tmpA = getValueR (a);
+					tmpB = getValueL (b);
+					setValue (b, (ushort)((short)tmpA >> (short)tmpB));
+					setValue ((ushort)VALUES.EX, (ushort) (tmpB << (16 - tmpA)));
+					break;
+				case OPCODES.SHL:
+					binaryOp ((x, y) => x >> y);
+					setValue ((ushort) VALUES.EX, (ushort) (((b << a) >> 16) & 0xffff));
+					break;
+				case OPCODES.IFB:
+					ifOp ((x, y) => (x & y) != 0);
+					break;
+				case OPCODES.IFC:
+					ifOp ((x, y) => (x & y) == 0);
+					break;
+				case OPCODES.IFE:
+					ifOp ((x, y) => x == y);
+					break;
+				case OPCODES.IFN:
+					ifOp ((x, y) => x != y);
+					break;
+				case OPCODES.IFG:
+					ifOp ((x, y) => x > y);
+					break;
+				case OPCODES.IFA:
+					ifOpS ((x, y) => x > y);
+					break;
+				case OPCODES.IFL:
+					ifOp ((x, y) => x < y);
+					break;
+				case OPCODES.IFU:
+					ifOpS ((x, y) => x < y);
+					break;
+				case OPCODES.ADX:
+					binaryOp ((x, y) => x + y + EX);
+					break;
+				case OPCODES.SBX:
+					binaryOp ((x, y) => x - y + EX);
+					break;
+				case OPCODES.STI:
+					setValue (b, getValueR (a));
+					I++;
+					J++;
+					break;
+				case OPCODES.STD:
+					setValue (b, getValueR (a));
+					I--;
+					J--;
+					break;
+				default:
+					throw new NotImplementedException();
 			}
 		}
 
@@ -64,14 +179,6 @@ namespace DCPU16Emulator
 			if (bits >= 0x20 && bits <= 0x3f)
 				return (ushort)(bits - 0x21);
 
-			// Turn next word registers
-			ushort nextWord = 0;
-			if (bits >= 0x10 && bits <= 0x17)
-			{
-				nextWord = getNextWord();
-				bits /= 2;
-			}
-
 			switch ((VALUES)bits)
 			{
 				//register
@@ -85,14 +192,23 @@ namespace DCPU16Emulator
 				case VALUES.J: return J;
 
 				// [register] and [register + nextWord]
-				case VALUES.REG_A: return mem[A + nextWord];
-				case VALUES.REG_B: return mem[B + nextWord];
-				case VALUES.REG_C: return mem[C + nextWord];
-				case VALUES.REG_X: return mem[X + nextWord];
-				case VALUES.REG_Y: return mem[Y + nextWord];
-				case VALUES.REG_Z: return mem[Z + nextWord];
-				case VALUES.REG_I: return mem[I + nextWord];
-				case VALUES.REG_J: return mem[J + nextWord];
+				case VALUES.REG_A: return mem[A];
+				case VALUES.REG_B: return mem[B];
+				case VALUES.REG_C: return mem[C];
+				case VALUES.REG_X: return mem[X];
+				case VALUES.REG_Y: return mem[Y];
+				case VALUES.REG_Z: return mem[Z];
+				case VALUES.REG_I: return mem[I];
+				case VALUES.REG_J: return mem[J];
+
+				case VALUES.REGN_A: return mem[A + getNextWord()];
+				case VALUES.REGN_B: return mem[B + getNextWord()];
+				case VALUES.REGN_C: return mem[C + getNextWord()];
+				case VALUES.REGN_X: return mem[X + getNextWord()];
+				case VALUES.REGN_Y: return mem[Y + getNextWord()];
+				case VALUES.REGN_Z: return mem[Z + getNextWord()];
+				case VALUES.REGN_I: return mem[I + getNextWord()];
+				case VALUES.REGN_J: return mem[J + getNextWord()];
 
 				case VALUES.SP: return SP;
 				case VALUES.PC: return PC;
