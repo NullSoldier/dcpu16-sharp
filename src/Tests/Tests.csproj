@@ -9,8 +9,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Tests</RootNamespace>
     <AssemblyName>Tests</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -81,18 +82,21 @@
     <Compile Include="Tests\LoopTest.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Samples\Increment.bin">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Include="TestBinaries\Increment.10c" />
+    <None Include="TestBinaries\Increment.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="Samples\Loop.bin">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <None Include="TestBinaries\Loop.10c" />
+    <None Include="TestBinaries\Loop.bin">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="Samples\SoftwareInterruptTest.bin">
+    <None Include="TestBinaries\SoftwareInterrupt.10c" />
+    <None Include="TestBinaries\SoftwareInterruptTest.bin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Emulator\dcpu16-sharp.csproj">
+    <ProjectReference Include="..\dcpu16-sharp\dcpu16-sharp.csproj">
       <Project>{a539be9e-df62-446a-b317-9858994d1ae2}</Project>
       <Name>dcpu16-sharp</Name>
     </ProjectReference>
