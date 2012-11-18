@@ -21,19 +21,19 @@ namespace DCPU16Emulator
 			}
 		}
 
-		private ushort[] mem = new ushort[ushort.MaxValue];
-		private ushort PC, SP, EX, A, B, C, X, Y, Z, I, J;
+		public ushort[] mem = new ushort[ushort.MaxValue];
+		public ushort PC, SP, EX, A, B, C, X, Y, Z, I, J;
 
 		private void ProcessNextInstruction ()
 		{
-			ushort nextWord = getNextWord();
+			ushort nextWord = GetNextWord();
 
 			ushort opcode = (ushort) (nextWord & 0x1f);
 			ushort b = (ushort) ((nextWord & 0x3e0) >> 5);
 			ushort a = (ushort) ((nextWord & 0xfc00) >> 10);
 
 			Action<Func<ushort, ushort, int>> binaryOp = (f) =>
-			    setValue (b, (ushort) f (getValueL (b), getValueR (a)));
+			    SetValue (b, (ushort) f (GetValueL (b), GetValueR (a)));
 
 			Action<Func<short, short, int>> binaryOpS = (f) =>
 				binaryOp ((x, y) => f ((short) x, (short) y));
@@ -49,7 +49,7 @@ namespace DCPU16Emulator
 			switch ((OPCODES) opcode)
 			{
 				case OPCODES.SET:
-					setValue (b, getValueR (a));
+					SetValue (b, GetValueR (a));
 					break;
 				case OPCODES.ADD:
 					binaryOp ((x, y) => x + y);
@@ -85,21 +85,21 @@ namespace DCPU16Emulator
 					binaryOp ((x, y) => x ^ y);
 					break;
 				case OPCODES.SHR:
-					ushort tmpA = getValueR (a);
-					ushort tmpB = getValueL (b);
-					setValue (b, (ushort) (tmpA >> tmpB));
-					setValue ((ushort)VALUES.EX, (ushort)(((ushort)(tmpB << 16) >> tmpA) & 0xffff));
+					ushort tmpA = GetValueR (a);
+					ushort tmpB = GetValueL (b);
+					SetValue (b, (ushort) (tmpA >> tmpB));
+					SetValue ((ushort)VALUES.EX, (ushort)(((ushort)(tmpB << 16) >> tmpA) & 0xffff));
 					break;
 				case OPCODES.ASR:
 					// No declaration (because C#)
-					tmpA = getValueR (a);
-					tmpB = getValueL (b);
-					setValue (b, (ushort)((short)tmpA >> (short)tmpB));
-					setValue ((ushort)VALUES.EX, (ushort) (tmpB << (16 - tmpA)));
+					tmpA = GetValueR (a);
+					tmpB = GetValueL (b);
+					SetValue (b, (ushort)((short)tmpA >> (short)tmpB));
+					SetValue ((ushort)VALUES.EX, (ushort) (tmpB << (16 - tmpA)));
 					break;
 				case OPCODES.SHL:
 					binaryOp ((x, y) => x >> y);
-					setValue ((ushort) VALUES.EX, (ushort) (((b << a) >> 16) & 0xffff));
+					SetValue ((ushort) VALUES.EX, (ushort) (((b << a) >> 16) & 0xffff));
 					break;
 				case OPCODES.IFB:
 					ifOp ((x, y) => (x & y) != 0);
@@ -132,12 +132,12 @@ namespace DCPU16Emulator
 					binaryOp ((x, y) => x - y + EX);
 					break;
 				case OPCODES.STI:
-					setValue (b, getValueR (a));
+					SetValue (b, GetValueR (a));
 					I++;
 					J++;
 					break;
 				case OPCODES.STD:
-					setValue (b, getValueR (a));
+					SetValue (b, GetValueR (a));
 					I--;
 					J--;
 					break;
@@ -148,32 +148,32 @@ namespace DCPU16Emulator
 
 		private void SkipUntilNonIf()
 		{
-			ushort nextWord = getNextWord ();
+			ushort nextWord = GetNextWord ();
 			ushort opcode = (ushort)(nextWord & 0x1f);
 
 			while (opcode >= (ushort)OPCODES.IFB && opcode <= (ushort)OPCODES.IFU)
 			{
-				nextWord = getNextWord ();
+				nextWord = GetNextWord ();
 				opcode = (ushort)(nextWord & 0x1f);
 			}
 		}
 
-		private ushort getNextWord()
+		private ushort GetNextWord()
 		{
 			return mem[PC++];
 		}
 
-		private ushort getValueL (ushort bits)
+		private ushort GetValueL (ushort bits)
 		{
-			return getValue (bits, false);
+			return GetValue (bits, false);
 		}
 
-		private ushort getValueR (ushort bits)
+		private ushort GetValueR (ushort bits)
 		{
-			return getValue (bits, true);
+			return GetValue (bits, true);
 		}
 
-		private ushort getValue (ushort bits, bool bitsAreA)
+		private ushort GetValue (ushort bits, bool bitsAreA)
 		{
 			// Literals (-1..30)
 			if (bits >= 0x20 && bits <= 0x3f)
@@ -201,29 +201,29 @@ namespace DCPU16Emulator
 				case VALUES.REG_I: return mem[I];
 				case VALUES.REG_J: return mem[J];
 
-				case VALUES.REGN_A: return mem[A + getNextWord()];
-				case VALUES.REGN_B: return mem[B + getNextWord()];
-				case VALUES.REGN_C: return mem[C + getNextWord()];
-				case VALUES.REGN_X: return mem[X + getNextWord()];
-				case VALUES.REGN_Y: return mem[Y + getNextWord()];
-				case VALUES.REGN_Z: return mem[Z + getNextWord()];
-				case VALUES.REGN_I: return mem[I + getNextWord()];
-				case VALUES.REGN_J: return mem[J + getNextWord()];
+				case VALUES.REGN_A: return mem[A + GetNextWord()];
+				case VALUES.REGN_B: return mem[B + GetNextWord()];
+				case VALUES.REGN_C: return mem[C + GetNextWord()];
+				case VALUES.REGN_X: return mem[X + GetNextWord()];
+				case VALUES.REGN_Y: return mem[Y + GetNextWord()];
+				case VALUES.REGN_Z: return mem[Z + GetNextWord()];
+				case VALUES.REGN_I: return mem[I + GetNextWord()];
+				case VALUES.REGN_J: return mem[J + GetNextWord()];
 
 				case VALUES.SP: return SP;
 				case VALUES.PC: return PC;
 				case VALUES.EX: return EX;
 				case VALUES.PUSHPOP: return bitsAreA ? mem[SP++] : mem[--SP];
 				case VALUES.PEEK: return mem[SP];
-				case VALUES.PICK: return mem[SP + getNextWord ()];
-				case VALUES.NEXT: return mem[getNextWord ()];
-				case VALUES.NEXTLIT: return getNextWord ();
+				case VALUES.PICK: return mem[SP + GetNextWord ()];
+				case VALUES.NEXT: return mem[GetNextWord ()];
+				case VALUES.NEXTLIT: return GetNextWord ();
 
 				default: throw new NotSupportedException ("Value " + bits + " is not supported");
 			}
 		}
 
-		private void setValue (ushort dest, ushort x)
+		private void SetValue (ushort dest, ushort x)
 		{
 			switch (dest)
 			{
@@ -247,22 +247,22 @@ namespace DCPU16Emulator
 				case 0x0f: mem[J] = x; return;
 
 				// [register + next word]
-				case 0x10: mem[A + getNextWord ()] = x; return;
-				case 0x11: mem[B + getNextWord ()] = x; return;
-				case 0x12: mem[C + getNextWord ()] = x; return;
-				case 0x13: mem[X + getNextWord ()] = x; return;
-				case 0x14: mem[Y + getNextWord ()] = x; return;
-				case 0x15: mem[Z + getNextWord ()] = x; return;
-				case 0x16: mem[I + getNextWord ()] = x; return;
-				case 0x17: mem[J + getNextWord ()] = x; return;
+				case 0x10: mem[A + GetNextWord ()] = x; return;
+				case 0x11: mem[B + GetNextWord ()] = x; return;
+				case 0x12: mem[C + GetNextWord ()] = x; return;
+				case 0x13: mem[X + GetNextWord ()] = x; return;
+				case 0x14: mem[Y + GetNextWord ()] = x; return;
+				case 0x15: mem[Z + GetNextWord ()] = x; return;
+				case 0x16: mem[I + GetNextWord ()] = x; return;
+				case 0x17: mem[J + GetNextWord ()] = x; return;
 
 				case 0x18: throw new NotImplementedException(); // PUSH/POP
 				case 0x19: mem[SP] = x; return;					// PEEK
-				case 0x1a: mem[SP + getNextWord ()] = x; return; // [SP + next word]
+				case 0x1a: mem[SP + GetNextWord ()] = x; return; // [SP + next word]
 				case 0x1b: SP = x; return;						// SP
 				case 0x1c: PC = x; return;						// PC
 				case 0x1d: EX = x; return;						// EX
-				case 0x1e: mem[getNextWord ()] = x; return;		// [next word]
+				case 0x1e: mem[GetNextWord ()] = x; return;		// [next word]
 			}
 
 			// Literals fails silently
