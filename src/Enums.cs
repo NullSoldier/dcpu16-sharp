@@ -6,9 +6,10 @@ using System.Threading.Tasks;
 
 namespace DCPU16Emulator
 {
+	// ReSharper disable InconsistentNaming
 	public enum OPCODES
 	{
-		//- = 0x00,
+		SPECIAL = 0x00,
 		SET = 0x01,
 		ADD = 0x02,
 		SUB = 0x03,
@@ -84,4 +85,5 @@ namespace DCPU16Emulator
 		NEXT	= 0x1e, // [next word]
 		NEXTLIT	= 0x1f  // next word (literal)
 	};
+	// ReSharper restore InconsistentNaming
 }
