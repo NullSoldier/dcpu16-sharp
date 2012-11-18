@@ -41,7 +41,20 @@ namespace dcpu16sharp
 		//- = 0x1d,
 		STI = 0x1e,
 		STD = 0x1f
+	}
 
+	public enum SPECIAL_OPCODES
+	{
+		RESERVED=0x00,
+		JSR=0x01,
+		INT=0x08,
+		IAG=0x09,
+		IAS=0x0a,
+		RFI=0x0b,
+		IAQ=0x0c,
+		HWN=0x10,
+		HWQ=0x11,
+		HWI=0x12
 	}
 
 	public enum VALUES : ushort

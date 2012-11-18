@@ -1,0 +1,14 @@
+; Assert...
+;A = 101
+;B = 56
+;C = 157
+SET A, 5
+ADD A, 93
+ADD A, 3
+
+SET B, 2
+ADD B, 4
+ADD B, 50
+
+SET C, B
+ADD C, A

@@ -8,23 +8,16 @@ namespace dcpu16sharp
 {
 	public class Processor
 	{
-		public Processor(ushort[] instructions)
+		public Processor (ushort[] instructions)
 		{
 			instructions.CopyTo (mem, 0);
 		}
 
-		public void Run()
-		{
-			while (true)
-			{
-				ProcessNextInstruction();
-			}
-		}
-
+		public event EventHandler SoftwareInterruptFired;
 		public ushort[] mem = new ushort[ushort.MaxValue];
 		public ushort PC, SP, EX, A, B, C, X, Y, Z, I, J;
 
-		private void ProcessNextInstruction ()
+		public void ProcessNextInstruction()
 		{
 			ushort nextWord = GetNextWord();
 
@@ -39,7 +32,7 @@ namespace dcpu16sharp
 				binaryOp ((x, y) => f ((short) x, (short) y));
 
 			Action<Func<ushort, ushort, bool>> ifOp = (f) => {
-				if (f (b, a)) ProcessNextInstruction();
+				if (f (GetValueL(b), GetValueR(a))) ProcessNextInstruction();
 				else SkipUntilNonIf();
 			};
 
@@ -48,6 +41,9 @@ namespace dcpu16sharp
 
 			switch ((OPCODES) opcode)
 			{
+				case OPCODES.SPECIAL:
+					ProcessSpecialInstruction (b, GetValueR (a));
+					break;
 				case OPCODES.SET:
 					SetValue (b, GetValueR (a));
 					break;
@@ -146,16 +142,37 @@ namespace dcpu16sharp
 			}
 		}
 
+		private void ProcessSpecialInstruction (ushort opcode, ushort value)
+		{
+			switch ((SPECIAL_OPCODES)opcode)
+			{
+				case SPECIAL_OPCODES.INT:
+					FireSoftwareInterrupt (value);
+					break;
+			}
+		}
+
 		private void SkipUntilNonIf()
 		{
-			ushort nextWord = GetNextWord ();
-			ushort opcode = (ushort)(nextWord & 0x1f);
+			ushort tmpSP = SP;
+
+			ushort currentWord = mem[PC];
+			ushort opcode = (ushort)(currentWord & 0x1f);
 
 			while (opcode >= (ushort)OPCODES.IFB && opcode <= (ushort)OPCODES.IFU)
 			{
-				nextWord = GetNextWord ();
-				opcode = (ushort)(nextWord & 0x1f);
+				currentWord = GetNextWord();
+				opcode = (ushort)(currentWord & 0x1f);
+
+				GetValueR ((ushort)((currentWord & 0x3e0) >> 5));
+				GetValueL ((ushort)((currentWord & 0xfc00) >> 10));
 			}
+
+			currentWord = GetNextWord ();
+			GetValueR ((ushort)((currentWord & 0x3e0) >> 5));
+			GetValueL ((ushort)((currentWord & 0xfc00) >> 10));
+
+			SP = tmpSP;
 		}
 
 		private ushort GetNextWord()
@@ -270,6 +287,13 @@ namespace dcpu16sharp
 				return;
 
 			throw new NotSupportedException ("Unsupported type to set to");
+		}
+
+		private void FireSoftwareInterrupt (ushort message)
+		{
+			var handler = SoftwareInterruptFired;
+			if (handler != null)
+				handler (this, EventArgs.Empty);
 		}
 	}
 }

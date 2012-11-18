@@ -1,0 +1,11 @@
+; Loops from 0 to 5 and succeeds if A is 5
+SET A, 0
+
+:loop
+
+ADD A, 1
+IFE A, 5
+	SET PC, endloop
+
+SET PC, loop
+:endloop
