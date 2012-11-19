@@ -21,7 +21,7 @@ namespace Tests.Tests
 		public void Setup()
 		{
 			ushort[] instructions = InstructionLoader.Load (path);
-			cpu = new Processor (instructions);
+			cpu = new Processor (instructions, new IHardware[0]);
 		}
 
 		protected void TickCPU (int howManyTimes)

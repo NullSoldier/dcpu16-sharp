@@ -8,15 +8,19 @@ namespace dcpu16sharp
 {
 	public class Processor
 	{
-		public Processor (ushort[] instructions)
+		public Processor (ushort[] instructions, IHardware[] connectedHardware)
 		{
 			instructions.CopyTo (mem, 0);
 		}
 
 		public event EventHandler SoftwareInterruptFired;
-		public ushort[] mem = new ushort[ushort.MaxValue+1];
-		public ushort PC, SP, EX, A, B, C, X, Y, Z, I, J;
 
+		public bool QueueInterrupts;
+		public IHardware[] Hardware;
+		public ushort[] mem = new ushort[ushort.MaxValue+1];
+		public ushort PC, SP, EX, IA;
+		public ushort A, B, C, X, Y, Z, I, J;
+		
 		public void ProcessNextInstruction()
 		{
 			ushort nextWord = GetNextWord();
@@ -150,19 +154,44 @@ namespace dcpu16sharp
 			{
 				case SPECIAL_OPCODES.JSR:
 					mem[--SP] = PC;
-					PC = rValue;
+					PC = GetValueR (rValue);
 					break;
 				case SPECIAL_OPCODES.INT:
-					FireSoftwareInterrupt (rValue);
+					FireSoftwareInterrupt (GetValueR(rValue));
 					break;
 				case SPECIAL_OPCODES.IAG:
+					SetValue (rValue, IA);
+					break;
 				case SPECIAL_OPCODES.IAS:
+					IA = GetValueR (rValue);
+					break;
 				case SPECIAL_OPCODES.RFI:
+					QueueInterrupts = false;
+					A = mem[SP++];
+					PC = mem[SP++];
+					break;
 				case SPECIAL_OPCODES.IAQ:
+					QueueInterrupts = GetValueR (rValue) != 0;
+					break;
 				case SPECIAL_OPCODES.HWN:
+					SetValue (rValue, (ushort)Hardware.Length);
+					break;
 				case SPECIAL_OPCODES.HWQ:
+				{
+					var hardware = Hardware[GetValueR (rValue)];
+					A = (ushort) (hardware.ID & 0xffff0000);
+					B = (ushort) (hardware.ID & 0x0000ffff);
+					C = hardware.Version;
+					X = (ushort) (hardware.Manufactorer & 0xffff0000);
+					Y = (ushort) (hardware.Manufactorer & 0x0000ffff);
+					break;
+				}
 				case SPECIAL_OPCODES.HWI:
-					throw new NotImplementedException();
+				{
+					var hardware = Hardware[GetValueR (rValue)];
+					hardware.Interrupt();
+					break;
+				}
 				default:
 					throw new NotSupportedException();
 			}
