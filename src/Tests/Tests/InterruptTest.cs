@@ -3,7 +3,7 @@
 namespace Tests.Tests
 {
 	[TestFixture]
-	public class InteruptTest : BaseTest
+	public class InteruptTest : BaseLoadedTest
 	{
 		public InteruptTest() : base ("SoftwareInterruptTest.bin") { }
 

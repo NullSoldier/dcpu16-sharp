@@ -3,7 +3,7 @@
 namespace Tests.Tests
 {
 	[TestFixture]
-	public class LoopTest : BaseTest
+	public class LoopTest : BaseLoadedTest
 	{
 		public LoopTest() : base ("Loop.bin") { }
 

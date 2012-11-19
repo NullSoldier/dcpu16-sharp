@@ -76,11 +76,12 @@
   <ItemGroup>
     <Compile Include="InstructionLoader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Tests\BaseTest.cs" />
+    <Compile Include="Tests\BaseLoadedTest.cs" />
     <Compile Include="Tests\ComplexTest.cs" />
     <Compile Include="Tests\IncrementTest.cs" />
     <Compile Include="Tests\InterruptTest.cs" />
     <Compile Include="Tests\LoopTest.cs" />
+    <Compile Include="Tests\ParsingRValues.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="TestBinaries\ComplexTest.10c" />

@@ -3,7 +3,7 @@
 namespace Tests.Tests
 {
 	[TestFixture]
-	public class IncrementTest : BaseTest
+	public class IncrementTest : BaseLoadedTest
 	{
 		public IncrementTest() : base ("Increment.bin") { }
 

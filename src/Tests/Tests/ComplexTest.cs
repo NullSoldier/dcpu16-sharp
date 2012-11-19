@@ -3,7 +3,7 @@
 namespace Tests.Tests
 {
 	[TestFixture]
-	public class ComplexTest : BaseTest
+	public class ComplexTest : BaseLoadedTest
 	{
 		public ComplexTest() : base ("ComplexTest.bin") { }
 

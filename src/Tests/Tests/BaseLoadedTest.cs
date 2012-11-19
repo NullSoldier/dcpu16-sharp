@@ -10,9 +10,9 @@ using dcpu16sharp;
 namespace Tests.Tests
 {
 	[TestFixture]
-	public class BaseTest
+	public class BaseLoadedTest
 	{
-		public BaseTest (string testBinaryPath)
+		public BaseLoadedTest (string testBinaryPath)
 		{
 			this.path = Path.Combine (binaryRoot, testBinaryPath);
 		}
