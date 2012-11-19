@@ -20,7 +20,122 @@ namespace dcpu16sharp
 		public ushort[] mem = new ushort[ushort.MaxValue+1];
 		public ushort PC, SP, EX, IA;
 		public ushort A, B, C, X, Y, Z, I, J;
-		
+
+		public ushort GetNextWord()
+		{
+			return mem[PC++];
+		}
+
+		public ushort GetValueL (ushort bits)
+		{
+			return GetValue (bits, false);
+		}
+
+		public ushort GetValueR (ushort bits)
+		{
+			return GetValue (bits, true);
+		}
+
+		public ushort GetValue (ushort bits, bool bitsAreA)
+		{
+			// Literals (-1..30)
+			if (bits >= 0x20 && bits <= 0x3f)
+				return (ushort)(bits - 0x21);
+
+			switch ((VALUES)bits)
+			{
+				//register
+				case VALUES.A: return A;
+				case VALUES.B: return B;
+				case VALUES.C: return C;
+				case VALUES.X: return X;
+				case VALUES.Y: return Y;
+				case VALUES.Z: return Z;
+				case VALUES.I: return I;
+				case VALUES.J: return J;
+
+				// [register]
+				case VALUES.REG_A: return mem[A];
+				case VALUES.REG_B: return mem[B];
+				case VALUES.REG_C: return mem[C];
+				case VALUES.REG_X: return mem[X];
+				case VALUES.REG_Y: return mem[Y];
+				case VALUES.REG_Z: return mem[Z];
+				case VALUES.REG_I: return mem[I];
+				case VALUES.REG_J: return mem[J];
+				
+				// [register + nextWord]
+				case VALUES.REGN_A: return mem[A + GetNextWord ()];
+				case VALUES.REGN_B: return mem[B + GetNextWord ()];
+				case VALUES.REGN_C: return mem[C + GetNextWord ()];
+				case VALUES.REGN_X: return mem[X + GetNextWord ()];
+				case VALUES.REGN_Y: return mem[Y + GetNextWord ()];
+				case VALUES.REGN_Z: return mem[Z + GetNextWord ()];
+				case VALUES.REGN_I: return mem[I + GetNextWord ()];
+				case VALUES.REGN_J: return mem[J + GetNextWord ()];
+
+				case VALUES.SP: return SP;
+				case VALUES.PC: return PC;
+				case VALUES.EX: return EX;
+				case VALUES.PUSHPOP: return bitsAreA ? mem[SP++] : mem[--SP];
+				case VALUES.PEEK: return mem[SP];
+				case VALUES.PICK: return mem[SP + GetNextWord()];
+				case VALUES.NEXT: return mem[GetNextWord()];
+				case VALUES.NEXTLIT: return GetNextWord ();
+
+				default: throw new NotSupportedException ("Value " + bits + " is not supported");
+			}
+		}
+
+		public void SetValue(ushort dest, ushort x)
+		{
+			switch ((VALUES)dest)
+			{
+				case VALUES.A: A = x; return;
+				case VALUES.B: B = x; return;
+				case VALUES.C: C = x; return;
+				case VALUES.X: X = x; return;
+				case VALUES.Y: Y = x; return;
+				case VALUES.Z: Z = x; return;
+				case VALUES.I: I = x; return;
+				case VALUES.J: J = x; return;
+
+				// [register]
+				case VALUES.REG_A: mem[A] = x; return;
+				case VALUES.REG_B: mem[B] = x; return;
+				case VALUES.REG_C: mem[C] = x; return;
+				case VALUES.REG_X: mem[X] = x; return;
+				case VALUES.REG_Y: mem[Y] = x; return;
+				case VALUES.REG_Z: mem[Z] = x; return;
+				case VALUES.REG_I: mem[I] = x; return;
+				case VALUES.REG_J: mem[J] = x; return;
+
+				// [register + next word]
+				case VALUES.REGN_A: mem[A + GetNextWord ()] = x; return;
+				case VALUES.REGN_B: mem[B + GetNextWord ()] = x; return;
+				case VALUES.REGN_C: mem[C + GetNextWord ()] = x; return;
+				case VALUES.REGN_X: mem[X + GetNextWord ()] = x; return;
+				case VALUES.REGN_Y: mem[Y + GetNextWord ()] = x; return;
+				case VALUES.REGN_Z: mem[Z + GetNextWord ()] = x; return;
+				case VALUES.REGN_I: mem[I + GetNextWord ()] = x; return;
+				case VALUES.REGN_J: mem[J + GetNextWord ()] = x; return;
+
+				case VALUES.PUSHPOP: mem[--SP] = x; return;
+				case VALUES.PEEK: mem[SP] = x; return;
+				case VALUES.PICK: mem[SP + GetNextWord ()] = x; return;
+				case VALUES.SP: SP = x; return;
+				case VALUES.PC: PC = x; return;
+				case VALUES.EX: EX = x; return;
+				case VALUES.NEXT: mem[GetNextWord ()] = x; return;
+			}
+
+			// Literals fails silently
+			if (dest == 0x1f || (dest >= 0x20 && dest <= 0x3f)) // literals
+				return;
+
+			throw new NotSupportedException ("Unsupported type to set to");
+		}
+
 		public void ProcessNextInstruction()
 		{
 			ushort nextWord = GetNextWord();
@@ -218,120 +333,6 @@ namespace dcpu16sharp
 			GetValueL ((ushort)((currentWord & 0xfc00) >> 10));
 
 			SP = tmpSP;
-		}
-
-		private ushort GetNextWord()
-		{
-			return mem[PC++];
-		}
-
-		private ushort GetValueL (ushort bits)
-		{
-			return GetValue (bits, false);
-		}
-
-		private ushort GetValueR (ushort bits)
-		{
-			return GetValue (bits, true);
-		}
-
-		private ushort GetValue (ushort bits, bool bitsAreA)
-		{
-			// Literals (-1..30)
-			if (bits >= 0x20 && bits <= 0x3f)
-				return (ushort)(bits - 0x21);
-
-			switch ((VALUES)bits)
-			{
-				//register
-				case VALUES.A: return A;
-				case VALUES.B: return B;
-				case VALUES.C: return C;
-				case VALUES.X: return X;
-				case VALUES.Y: return Y;
-				case VALUES.Z: return Z;
-				case VALUES.I: return I;
-				case VALUES.J: return J;
-
-				// [register] and [register + nextWord]
-				case VALUES.REG_A: return mem[A];
-				case VALUES.REG_B: return mem[B];
-				case VALUES.REG_C: return mem[C];
-				case VALUES.REG_X: return mem[X];
-				case VALUES.REG_Y: return mem[Y];
-				case VALUES.REG_Z: return mem[Z];
-				case VALUES.REG_I: return mem[I];
-				case VALUES.REG_J: return mem[J];
-
-				case VALUES.REGN_A: return mem[A + GetNextWord()];
-				case VALUES.REGN_B: return mem[B + GetNextWord()];
-				case VALUES.REGN_C: return mem[C + GetNextWord()];
-				case VALUES.REGN_X: return mem[X + GetNextWord()];
-				case VALUES.REGN_Y: return mem[Y + GetNextWord()];
-				case VALUES.REGN_Z: return mem[Z + GetNextWord()];
-				case VALUES.REGN_I: return mem[I + GetNextWord()];
-				case VALUES.REGN_J: return mem[J + GetNextWord()];
-
-				case VALUES.SP: return SP;
-				case VALUES.PC: return PC;
-				case VALUES.EX: return EX;
-				case VALUES.PUSHPOP: return bitsAreA ? mem[SP++] : mem[--SP];
-				case VALUES.PEEK: return mem[SP];
-				case VALUES.PICK: return mem[SP + GetNextWord ()];
-				case VALUES.NEXT: return mem[GetNextWord ()];
-				case VALUES.NEXTLIT: return GetNextWord ();
-
-				default: throw new NotSupportedException ("Value " + bits + " is not supported");
-			}
-		}
-
-		private void SetValue (ushort dest, ushort x)
-		{
-			switch (dest)
-			{
-				case 0x00: A = x; return;
-				case 0x01: B = x; return;
-				case 0x02: C = x; return;
-				case 0x03: X = x; return;
-				case 0x04: Y = x; return;
-				case 0x05: Z = x; return;
-				case 0x06: I = x; return;
-				case 0x07: J = x; return;
-
-				// [register]
-				case 0x08: mem[A] = x; return;
-				case 0x09: mem[B] = x; return;
-				case 0x0a: mem[C] = x; return;
-				case 0x0b: mem[X] = x; return;
-				case 0x0c: mem[Y] = x; return;
-				case 0x0d: mem[Z] = x; return;
-				case 0x0e: mem[I] = x; return;
-				case 0x0f: mem[J] = x; return;
-
-				// [register + next word]
-				case 0x10: mem[A + GetNextWord ()] = x; return;
-				case 0x11: mem[B + GetNextWord ()] = x; return;
-				case 0x12: mem[C + GetNextWord ()] = x; return;
-				case 0x13: mem[X + GetNextWord ()] = x; return;
-				case 0x14: mem[Y + GetNextWord ()] = x; return;
-				case 0x15: mem[Z + GetNextWord ()] = x; return;
-				case 0x16: mem[I + GetNextWord ()] = x; return;
-				case 0x17: mem[J + GetNextWord ()] = x; return;
-
-				case 0x18: throw new NotImplementedException(); // PUSH/POP
-				case 0x19: mem[SP] = x; return;					// PEEK
-				case 0x1a: mem[SP + GetNextWord ()] = x; return; // [SP + next word]
-				case 0x1b: SP = x; return;						// SP
-				case 0x1c: PC = x; return;						// PC
-				case 0x1d: EX = x; return;						// EX
-				case 0x1e: mem[GetNextWord ()] = x; return;		// [next word]
-			}
-
-			// Literals fails silently
-			if (dest == 0x1f || (dest >= 0x20 && dest <= 0x3f)) // literals
-				return;
-
-			throw new NotSupportedException ("Unsupported type to set to");
 		}
 
 		private void FireSoftwareInterrupt (ushort message)
